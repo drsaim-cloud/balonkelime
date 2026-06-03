@@ -26,20 +26,14 @@ workflows:
         script: |
           npm install --legacy-peer-deps
 
-      - name: Expo login
-        script: |
-          npx expo-cli login --non-interactive \
-            -u $EXPO_USERNAME -p $EXPO_PASSWORD || true
-          # Or via EAS token (recommended):
-          export EXPO_TOKEN=$EAS_TOKEN
-
       - name: Build APK via EAS
         script: |
           npm install -g eas-cli
-          eas build \
+          EXPO_TOKEN=$EAS_TOKEN eas build \
             --platform android \
             --profile production-apk \
             --non-interactive \
+            --wait \
             --output ./build/harf-balonu.apk
 
     artifacts:
@@ -82,10 +76,11 @@ workflows:
       - name: Build AAB via EAS
         script: |
           npm install -g eas-cli
-          eas build \
+          EXPO_TOKEN=$EAS_TOKEN eas build \
             --platform android \
             --profile production \
-            --non-interactive
+            --non-interactive \
+            --wait
 
     artifacts:
       - build/**/*.aab
@@ -127,10 +122,11 @@ workflows:
       - name: Build IPA via EAS
         script: |
           npm install -g eas-cli
-          eas build \
+          EXPO_TOKEN=$EAS_TOKEN eas build \
             --platform ios \
             --profile production \
-            --non-interactive
+            --non-interactive \
+            --wait
 
     artifacts:
       - build/**/*.ipa
