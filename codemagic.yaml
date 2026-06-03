@@ -24,7 +24,7 @@ workflows:
     scripts:
       - name: Install dependencies
         script: |
-          npm ci
+          npm install
 
       - name: Expo login
         script: |
@@ -77,7 +77,7 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm ci
+        script: npm install
 
       - name: Build AAB via EAS
         script: |
@@ -122,7 +122,7 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm ci
+        script: npm install
 
       - name: Build IPA via EAS
         script: |
