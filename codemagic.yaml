@@ -1,6 +1,6 @@
 workflows:
 
-  # ─── Android APK (debug/preview) ───────────────────────────────────────────
+  # ─── Android APK — CodeMagic native build (EAS yok) ───────────────────────
   android-apk:
     name: Android APK
     max_build_duration: 60
@@ -8,11 +8,9 @@ workflows:
 
     environment:
       node: 20.11.0
-      groups:
-        - expo_credentials   # EAS_TOKEN
-      vars:
-        EXPO_TOKEN:           $EAS_TOKEN
-        PACKAGE_NAME:         com.yourcompany.harfbalonu
+      java: 17
+      android_signing:
+        - harf_balonu_keystore   # CodeMagic > Code signing > Android > ekle
 
     triggering:
       events:
@@ -26,18 +24,27 @@ workflows:
         script: |
           npm install --legacy-peer-deps
 
-      - name: Build APK via EAS
+      - name: Expo prebuild (native klasörlerini üret)
         script: |
-          npm install -g eas-cli
-          EXPO_TOKEN=$EAS_TOKEN eas build \
-            --platform android \
-            --profile production-apk \
-            --non-interactive \
-            --wait \
-            --output ./build/harf-balonu.apk
+          npx expo prebuild --platform android --clean --no-install
+
+      - name: Build APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -PreactNativeArchitectures=arm64-v8a \
+            --no-daemon
+
+      - name: Copy APK
+        script: |
+          mkdir -p $CM_EXPORT_DIR
+          find android/app/build/outputs/apk/release -name "*.apk" \
+            -exec cp {} $CM_EXPORT_DIR/harf-balonu-release.apk \;
 
     artifacts:
-      - build/**/*.apk
+      - $CM_EXPORT_DIR/**/*.apk
+      - android/app/build/outputs/apk/**/*.apk
 
     publishing:
       email:
@@ -48,7 +55,7 @@ workflows:
           failure: true
 
 
-  # ─── Android AAB (Play Store) ──────────────────────────────────────────────
+  # ─── Android AAB — Play Store ─────────────────────────────────────────────
   android-aab:
     name: Android AAB (Play Store)
     max_build_duration: 90
@@ -56,11 +63,9 @@ workflows:
 
     environment:
       node: 20.11.0
-      groups:
-        - expo_credentials
-        - android_signing      # KEYSTORE, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
-      vars:
-        EXPO_TOKEN: $EAS_TOKEN
+      java: 17
+      android_signing:
+        - harf_balonu_keystore
 
     triggering:
       events:
@@ -71,19 +76,29 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm install
-
-      - name: Build AAB via EAS
         script: |
-          npm install -g eas-cli
-          EXPO_TOKEN=$EAS_TOKEN eas build \
-            --platform android \
-            --profile production \
-            --non-interactive \
-            --wait
+          npm install --legacy-peer-deps
+
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform android --clean --no-install
+
+      - name: Build AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease \
+            -PreactNativeArchitectures=arm64-v8a \
+            --no-daemon
+
+      - name: Copy AAB
+        script: |
+          mkdir -p $CM_EXPORT_DIR
+          find android/app/build/outputs/bundle/release -name "*.aab" \
+            -exec cp {} $CM_EXPORT_DIR/harf-balonu-release.aab \;
 
     artifacts:
-      - build/**/*.aab
+      - $CM_EXPORT_DIR/**/*.aab
 
     publishing:
       google_play:
@@ -92,7 +107,7 @@ workflows:
         submit_as_draft: true
 
 
-  # ─── iOS IPA ───────────────────────────────────────────────────────────────
+  # ─── iOS IPA ──────────────────────────────────────────────────────────────
   ios-ipa:
     name: iOS IPA
     max_build_duration: 90
@@ -101,12 +116,9 @@ workflows:
     environment:
       node: 20.11.0
       xcode: latest
-      groups:
-        - expo_credentials
-        - ios_signing         # APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID
-      vars:
-        EXPO_TOKEN:       $EAS_TOKEN
-        BUNDLE_ID:        com.yourcompany.harfbalonu
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.yourcompany.harfbalonu
 
     triggering:
       events:
@@ -117,19 +129,22 @@ workflows:
 
     scripts:
       - name: Install dependencies
-        script: npm install
-
-      - name: Build IPA via EAS
         script: |
-          npm install -g eas-cli
-          EXPO_TOKEN=$EAS_TOKEN eas build \
-            --platform ios \
-            --profile production \
-            --non-interactive \
-            --wait
+          npm install --legacy-peer-deps
+
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform ios --clean --no-install
+          cd ios && pod install
+
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/HarfBalonu.xcworkspace \
+            --scheme HarfBalonu
 
     artifacts:
-      - build/**/*.ipa
+      - build/ios/ipa/*.ipa
 
     publishing:
       app_store_connect:

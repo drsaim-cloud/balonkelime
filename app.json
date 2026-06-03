@@ -24,16 +24,15 @@
       },
       "package": "com.yourcompany.harfbalonu",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [],
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "minSdkVersion": 24
     },
     "plugins": [
       "expo-font",
-      "expo-haptics"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
-      }
-    }
+      "expo-haptics",
+      "expo-splash-screen"
+    ]
   }
 }
