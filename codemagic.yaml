@@ -1,0 +1,143 @@
+workflows:
+
+  # ─── Android APK (debug/preview) ───────────────────────────────────────────
+  android-apk:
+    name: Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      node: 20.11.0
+      groups:
+        - expo_credentials   # EAS_TOKEN
+      vars:
+        EXPO_TOKEN:           $EAS_TOKEN
+        PACKAGE_NAME:         com.yourcompany.harfbalonu
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      - name: Expo login
+        script: |
+          npx expo-cli login --non-interactive \
+            -u $EXPO_USERNAME -p $EXPO_PASSWORD || true
+          # Or via EAS token (recommended):
+          export EXPO_TOKEN=$EAS_TOKEN
+
+      - name: Build APK via EAS
+        script: |
+          npm install -g eas-cli
+          eas build \
+            --platform android \
+            --profile production-apk \
+            --non-interactive \
+            --output ./build/harf-balonu.apk
+
+    artifacts:
+      - build/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - your@email.com
+        notify:
+          success: true
+          failure: true
+
+
+  # ─── Android AAB (Play Store) ──────────────────────────────────────────────
+  android-aab:
+    name: Android AAB (Play Store)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      node: 20.11.0
+      groups:
+        - expo_credentials
+        - android_signing      # KEYSTORE, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
+      vars:
+        EXPO_TOKEN: $EAS_TOKEN
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+
+      - name: Build AAB via EAS
+        script: |
+          npm install -g eas-cli
+          eas build \
+            --platform android \
+            --profile production \
+            --non-interactive
+
+    artifacts:
+      - build/**/*.aab
+
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+
+
+  # ─── iOS IPA ───────────────────────────────────────────────────────────────
+  ios-ipa:
+    name: iOS IPA
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      node: 20.11.0
+      xcode: latest
+      groups:
+        - expo_credentials
+        - ios_signing         # APPLE_ID, APP_SPECIFIC_PASSWORD, TEAM_ID
+      vars:
+        EXPO_TOKEN:       $EAS_TOKEN
+        BUNDLE_ID:        com.yourcompany.harfbalonu
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+
+      - name: Build IPA via EAS
+        script: |
+          npm install -g eas-cli
+          eas build \
+            --platform ios \
+            --profile production \
+            --non-interactive
+
+    artifacts:
+      - build/**/*.ipa
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true

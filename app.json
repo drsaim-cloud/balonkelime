@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Harf Balonu",
+    "slug": "harf-balonu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#060d1a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourcompany.harfbalonu",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#060d1a"
+      },
+      "package": "com.yourcompany.harfbalonu",
+      "versionCode": 1,
+      "permissions": []
+    },
+    "plugins": [
+      "expo-font",
+      "expo-haptics"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
